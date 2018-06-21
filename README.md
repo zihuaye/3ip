@@ -52,15 +52,12 @@
 	http://xxx/ip?a=1.1.1.1&j=1	返回json格式
 
   http服务配置uwsgi支持，以nginx举例：
+
 	location /ip {
-
-                allow all;
-
-                include uwsgi_params;
-
-                uwsgi_pass 127.0.0.1:9009;
-
-        }
+		allow all;
+		include uwsgi_params;
+		uwsgi_pass 127.0.0.1:9009;
+	}
 
   uwsgi配置：
 	[uwsgi]
