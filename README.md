@@ -2,7 +2,8 @@
 
 用Python查询纯真IP库
 
-QQWry.Dat的格式如下:
+
+# QQWry.Dat的格式如下:
 
 +----------+
 
@@ -37,7 +38,7 @@ QQWry.Dat的格式如下:
    范围内IP的信息
 
 
-用法：
+# 用法：
 
 1.命令行查询
 
@@ -52,13 +53,18 @@ QQWry.Dat的格式如下:
 
   http服务配置uwsgi支持，以nginx举例：
 	location /ip {
+
                 allow all;
+
                 include uwsgi_params;
+
                 uwsgi_pass 127.0.0.1:9009;
+
         }
 
   uwsgi配置：
 	[uwsgi]
+
 	  chdir=/path/to/program
 	  master=True
 	  pidfile=/run/uwsgi/ip.pid
