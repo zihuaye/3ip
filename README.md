@@ -1,3 +1,5 @@
+#3ip
+
 用Python查询纯真IP库
 
 QQWry.Dat的格式如下:
