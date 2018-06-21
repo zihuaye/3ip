@@ -60,8 +60,8 @@
 	}
 
   uwsgi配置：
-	[uwsgi]
 
+	[uwsgi]
 	  chdir=/path/to/program
 	  master=True
 	  pidfile=/run/uwsgi/ip.pid
