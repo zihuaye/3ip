@@ -1,4 +1,4 @@
-#3ip
+# 3IP
 
 用Python查询纯真IP库
 
