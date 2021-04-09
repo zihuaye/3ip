@@ -366,12 +366,18 @@ def application(environ, start_response):
     js = parse_qs(environ['QUERY_STRING']).get('j', [None])[0]
     if js != None:
     	content_type = ('Content-Type', 'application/json; charset=utf-8')
+	json = True
     else:
     	content_type = ('Content-Type', 'text/html; charset=utf-8')
+	json = False
 
     ips = parse_qs(environ['QUERY_STRING']).get('a', [None])[0]
-    if ips == None:
-	ips = environ['HTTP_X_FORWARDED_FOR']
+
+    try:
+    	if ips == None:
+		ips = environ['HTTP_X_FORWARDED_FOR']
+    except:
+	ips = None
 
     if ips == None:
 	ips = environ['REMOTE_ADDR']
@@ -384,18 +390,29 @@ def application(environ, start_response):
 	if "-" in ips:
         	xy = ips.split("-")
 		if json == True:
-        		return '%s' % i.outputS(int(xy[0]), int(xy[1]), json=True)
+        		resp = i.outputS(int(xy[0]), int(xy[1]), json=True)
+    			start_response('200 OK', [content_type, ('Content-Length', str(len(resp)))])
 		else:
-        		return "<pre>%s</pre>" % i.outputS(int(xy[0]), int(xy[1]))
+        		resp = '<pre>' + i.outputS(int(xy[0]), int(xy[1])) + '</pre>'
+    			start_response('200 OK', [content_type, ('Content-Length', str(len(resp)))])
 
+       		return resp
+
+	if ":" in ips:
+		resp = '<pre>src ip: ' + ips + ' is ipv6</pre>'
+		start_response('200 OK', [content_type, ('Content-Length', str(len(resp)))])
+		return resp
 
 	if ips in ipcache:
 		(c, a) = ipcache[ips]
 	else:
+	  try:
     		(c, a) = i.getIPAddr(ips)
 		if len(ipcache) >= 1000:
 			ipcache.pop()
 		ipcache[ips] = (c, a)
+	  except:
+		print ips
 
 	if js != None:
     		resp = '{"ip":"%s", "cArea":"%s", "aArea":"%s", "time":"%s", "array":%s}' % (ips, c, a,
