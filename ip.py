@@ -1,10 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-#
-# Based on http://linuxtoy.org/files/pyip.py, ref https://linuxtoy.org/archives/python-ip.html
-#
-
 '''用Python查询纯真IP库
 
 QQWry.Dat的格式如下:
@@ -202,6 +198,9 @@ class IPInfo(object):
 
 	return s
 
+ipcache = {}
+i = IPInfo('qqwry.dat')
+
 def city_analyst(s, json=False):
     aa = []
     country = "中国"
@@ -360,46 +359,27 @@ def city_analyst(s, json=False):
     else:
 	return ""
 
-ipcache = {}
-i = IPInfo('qqwry.dat')
-
-def main():
-    ts = time.time()
-
-    if "-" in sys.argv[1]:
-	xy = sys.argv[1].split("-")
-	i.output(int(xy[0]), int(xy[1]))
-	return
-
-    if sys.argv[1] in ipcache:
-	(c, a) = ipcache[sys.argv[1]]
-    else:
-    	(c, a) = i.getIPAddr(sys.argv[1])
-	ipcache[sys.argv[1]] = (c, a)
-
-    print '%s %s %s %f秒' % (sys.argv[1], c, a, time.time()-ts)
-    print city_analyst(c+":"+a)
- 
 def application(environ, start_response):
+
     ts = time.time()
+
+    js = parse_qs(environ['QUERY_STRING']).get('j', [None])[0]
+    if js != None:
+    	content_type = ('Content-Type', 'application/json; charset=utf-8')
+    else:
+    	content_type = ('Content-Type', 'text/html; charset=utf-8')
 
     ips = parse_qs(environ['QUERY_STRING']).get('a', [None])[0]
-    js = parse_qs(environ['QUERY_STRING']).get('j', [None])[0]
-
-    if js != None:
-	json = True
-    else:
-	json = False
-
-    if json == True:
-    	start_response('200 OK', [('Content-Type', 'application/json; charset=utf-8')])
-    else:
-    	start_response('200 OK', [('Content-Type', 'text/html; charset=utf-8')])
+    if ips == None:
+	ips = environ['HTTP_X_FORWARDED_FOR']
 
     if ips == None:
 	ips = environ['REMOTE_ADDR']
 
     if ips != None:
+
+	_ips = ips.split(',')
+	ips = _ips[len(_ips)-1].strip()
 
 	if "-" in ips:
         	xy = ips.split("-")
@@ -417,12 +397,43 @@ def application(environ, start_response):
 			ipcache.pop()
 		ipcache[ips] = (c, a)
 
-	if json == True:
-    		return '{"ip":"%s", "cArea":"%s", "aArea":"%s", "time":"%s", "array":%s}' % (ips, c, a, str(time.time()-ts), city_analyst(c+":"+a, json=True))
+	if js != None:
+    		resp = '{"ip":"%s", "cArea":"%s", "aArea":"%s", "time":"%s", "array":%s}' % (ips, c, a,
+				str(time.time()-ts), city_analyst(c+":"+a, json=True))
 	else:
-    		return '<pre>%s %s %s<br><br>运行时间：%f 秒<br><br>%s</pre>' % (ips, c, a, time.time()-ts, city_analyst(c+":"+a))
+    		resp = '<pre>%s %s %s<br><br>运行时间：%f 秒<br><br>%s</pre>' % (ips, c, a,
+				time.time()-ts, city_analyst(c+":"+a))
     else:
-	return 'error: no query param'
+	resp = '{"error": "no query param"}'
 
+    start_response('200 OK', [content_type, ('Content-Length', str(len(resp)))])
+
+    return  resp
+
+def main():
+    ts = time.time()
+
+    if len(sys.argv) < 2:
+	ips = "0.0.0.0"
+    else:
+	ips = sys.argv[1]
+
+    if "-" in ips:
+	xy = ips.split("-")
+	i.output(int(xy[0]), int(xy[1]))
+	return
+
+    _ips = ips.split(',')
+    ips = _ips[len(_ips)-1].strip()
+
+    if ips in ipcache:
+	(c, a) = ipcache[ips]
+    else:
+    	(c, a) = i.getIPAddr(ips)
+	ipcache[ips] = (c, a)
+
+    print '%s %s %s %f秒' % (ips, c, a, time.time()-ts)
+    print city_analyst(c+":"+a)
+ 
 if __name__ == '__main__':
     main()
