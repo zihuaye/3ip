@@ -1,9 +1,9 @@
 # 3IP
 
-用Python查询纯真IP库
+用Python查询纯真IP库(IPv4&IPv6)
 
 
-# QQWry.Dat的格式如下:
+# QQWry.Dat 格式:
 
 +----------+
 
@@ -37,7 +37,7 @@
    索引区的IP和它指向的记录区一条记录中的IP构成一个IP范围。查询信息是这个
    范围内IP的信息
 
-## IPv6wry.db 格式说明
+## IPv6wry.db 格式:
 
 ```
 文件头
