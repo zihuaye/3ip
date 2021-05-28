@@ -32,6 +32,30 @@ QQWry.Dat的格式如下:
 
 '''
 
+'''
+IPv6wry.DB格式:
+文件头
+0~3	字符串	"IPDB"
+4~5	short	版本号,现在是2
+6	byte	偏移地址长度(2~8)
+7	byte	IP地址长度(4或8或12或16, 现在只支持4(ipv4)和8(ipv6))
+8~15	int64	记录数
+16~23	int64	索引区第一条记录的偏移
+24	byte	地址字段数(1~255)[版本2新增,版本1是2]
+25~31	reserve	保留,用00填充
+记录区
+array 字符串[地址字段数]
+	与qqwry.dat大致相同,但是没有结束IP地址
+	01开头的废弃不用
+	02+偏移地址[偏移长度]表示重定向
+	20~FF开头的为正常的字符串,采用UTF-8编码,00结尾
+索引区
+struct{
+	IP[IP地址长度]	little endian, 开始IP地址
+	偏移[偏移长度]	little endian, 记录偏移地址
+}索引[记录数];
+'''
+
 import sys, socket, time, re, ipaddr
 from struct import pack, unpack, unpack_from
 from urlparse import parse_qs
@@ -638,8 +662,6 @@ def main():
     		(c, a) = i.getIPAddr(ips)
 	ipcache[ips] = (c, a)
 
-    print c
-    print a
     print '%s %s %s %f秒' % (ips, c, a, time.time()-ts)
     print city_analyst(c+":"+a)
  
