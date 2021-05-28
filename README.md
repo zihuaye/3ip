@@ -2,6 +2,8 @@
 
 用Python查询纯真IP库(IPv4&IPv6)
 
+ip.py:    Python2
+ip.py3:   Python3
 
 # QQWry.Dat 格式:
 
