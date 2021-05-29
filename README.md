@@ -73,6 +73,7 @@ struct{
 1.命令行查询
 
 	./ip.py 1.1.1.1		查询IP归属
+	./ip.py 240e:1f:1::1	查询IPv6归属
 	./ip.py 100-200		查询编号100-200的IP记录
 
 2.Web浏览器查询
@@ -104,6 +105,7 @@ struct{
 	  uid = uwsgi
 	  gid = uwsgi
 	  plugins = python
+	  #plugins = python36
 	  buffer-size=32768
 	  wsgi-file=ip.py
 	  touch-reload=ip.py
