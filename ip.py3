@@ -638,9 +638,11 @@ def application(environ, start_response):
 	else:
 		resp = '{"error": "no query param"}'
 
-	start_response('200 OK', [content_type, ('Content-Length', str(len(resp)))])
+	_resp = resp.encode('utf-8')
+	
+	start_response('200 OK', [content_type, ('Content-Length', str(len(_resp)))])
 
-	return  resp
+	return _resp
 
 def main():
 	ts = time.time()
