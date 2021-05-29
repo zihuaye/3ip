@@ -179,7 +179,7 @@ class IPInfo(object):
 		# 使用网络字节编码IP地址
 		ip = unpack('!I', socket.inet_aton(ip))[0]
 		# 使用 self.find 函数查找ip的索引偏移
-		i = self.find(ip, 0, self.indexCount - 1)
+		i = int(self.find(ip, 0, self.indexCount - 1))
 		# 得到索引记录
 		o = self.firstIndex + i * 7
 		# 索引记录格式是： 前4字节IP信息+3字节指向IP记录信息的偏移量
