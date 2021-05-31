@@ -421,6 +421,10 @@ def city_analyst(s, json=False):
 
 	finish = False
 
+	if s[:2] == country:
+		s = s[2:]
+
+	#中国运营商
 	if len(aa) == 0:
 		rs = r"(.+)省(.+)市(.+)区:(.+)"
 		res = re.compile(rs)
@@ -444,6 +448,17 @@ def city_analyst(s, json=False):
 			network = a[4]
 
 	if len(aa) == 0:
+		rs = r"(.+)省(.+)市:(.*)(电信|移动|联通)(.*)"
+		res = re.compile(rs)
+		aa = res.findall(s)
+		if len(aa) > 0:
+			a = aa[0]
+			province = a[0]
+			city = a[1]
+			carrier = a[2]+a[3]
+			network = a[4]
+
+	if len(aa) == 0:
 		rs = r"(.+)省(.+)市:(.+)"
 		res = re.compile(rs)
 		aa = res.findall(s)
@@ -454,6 +469,16 @@ def city_analyst(s, json=False):
 			carrier = a[2]
 
 	if len(aa) == 0:
+		rs = r"(.+)省:(.+)(公众宽带)"
+		res = re.compile(rs)
+		aa = res.findall(s)
+		if len(aa) > 0:
+			a = aa[0]
+			province = a[0]
+			carrier = a[1]
+			network = a[2]
+
+	if len(aa) == 0:
 		rs = r"(.+)省:(.+)"
 		res = re.compile(rs)
 		aa = res.findall(s)
@@ -462,6 +487,7 @@ def city_analyst(s, json=False):
 			province = a[0]
 			carrier = a[1]
 
+	#外国运营商
 	if len(aa) == 0:
 		rs = r"(.+):(.+)州(.+)县(.+)村(.+)(公司)(.*)"
 		res = re.compile(rs)
@@ -523,6 +549,17 @@ def city_analyst(s, json=False):
 			city = a[2]
 			carrier = a[3]+a[4]
 			network = a[5]
+
+	if len(aa) == 0:
+		rs = r"(.+):(.+)州(.+)市(.*)"
+		res = re.compile(rs)
+		aa = res.findall(s)
+		if len(aa) > 0:
+			a = aa[0]
+			country = a[0]
+			province = a[1]
+			city = a[2]
+			carrier = a[3]
 
 	if len(aa) == 0:
 		rs = r"(.+):(.+)(公司)(.*)"
@@ -637,6 +674,8 @@ def application(environ, start_response):
 							time.time()-ts, city_analyst(c.decode('utf-8')+":"+a.decode('utf-8')))
 	else:
 		resp = '{"error": "no query param"}'
+
+	resp += "<br><pre>\n----------------------------------------\nPowered by 3ip</pre>"
 
 	_resp = resp.encode('utf-8')
 	
