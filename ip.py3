@@ -91,9 +91,9 @@ class IPInfo(object):
 		b_str = self.img[offset:o2]
 		try:
 			#qqwry.dat字符串编码gb2312
-			utf8_str = str(b_str, 'gb2312').encode('utf-8')
+			utf8_str = str(b_str, 'gb2312')
 		except:
-			utf8_str = '未知'.encode('utf-8')
+			utf8_str = '未知'
 
 		return utf8_str
 
@@ -287,7 +287,7 @@ class IPDBv6(object):
 			#ipv6wry.db字符串编码utf-8
 			utf8_str = str(b_str, "utf-8")
 		except:
-			utf8_str = '未知'.encode('utf-8')
+			utf8_str = '未知'
 
 		return utf8_str
 
@@ -636,12 +636,12 @@ def application(environ, start_response):
 
 	try:
 		if ips == None:
-			ips = environ['HTTP_X_FORWARDED_FOR']
+			ips = environ.get('HTTP_X_FORWARDED_FOR')
 	except:
 		ips = None
 
 	if ips == None:
-		ips = environ['REMOTE_ADDR']
+		ips = environ.get('REMOTE_ADDR')
 
 	if ips != None:
 
@@ -664,16 +664,22 @@ def application(environ, start_response):
 		else:
 			is_ipv6 = False
 
+		if environ.get('HTTP_CACHE_CONTROL') == "no-cache":
+			ignore_cache = True 
+		else:
+			ignore_cache = False
 
-		if ips in ipcache:
+		if ips in ipcache and not ignore_cache:
+			cache_status = "hit"
 			(c, a) = ipcache[ips]
 		else:
+			cache_status = "miss"
 			try:
 				if is_ipv6:
-					(_, _, _, _c, _a) = i6.getIPAddr(ips)
-					(c, a) = (_c.encode("utf-8"), _a.encode("utf-8"))
+					(_, _, _, c, a) = i6.getIPAddr(ips)
 				else:
 					(c, a) = i.getIPAddr(ips)
+
 				if len(ipcache) >= 1000:
 					ipcache.pop()
 				ipcache[ips] = (c, a)
@@ -681,16 +687,15 @@ def application(environ, start_response):
 				print(ips)
 
 		if js != None:
-			resp = '{"ip":"%s", "cArea":"%s", "aArea":"%s", "time":"%s", "array":%s}' % (ips, c.decode('utf-8'),
-							a.decode('utf-8'), str(time.time()-ts),
-							city_analyst(c.decode('utf-8')+":"+a.decode('utf-8'), json=True))
+			resp = '{"ip":"%s", "cArea":"%s", "aArea":"%s", "time":"%s", "array":%s}' % (ips, c, a,
+					str(time.time()-ts), city_analyst(c+":"+a, json=True))
 		else:
-			resp = '<pre>%s %s %s<br><br>运行时间：%f 秒<br><br>%s</pre>' % (ips, c.decode('utf-8'), a.decode('utf-8'),
-							time.time()-ts, city_analyst(c.decode('utf-8')+":"+a.decode('utf-8')))
+			resp = '<pre>%s %s %s<br><br>运行时间：%f 秒<br><br>%s<br><br>Cache：%s</pre>' % (ips, c, a,
+					time.time()-ts, city_analyst(c+":"+a), cache_status)
 	else:
 		resp = '{"error": "no query param"}'
 
-	resp += "<br><pre>\n----------------------------------------\nPowered by 3ip</pre>"
+	resp += "<pre>\n----------------------------------------\nPowered by 3ip</pre>"
 
 	_resp = resp.encode('utf-8')
 	
@@ -723,14 +728,13 @@ def main():
 		(c, a) = ipcache[ips]
 	else:
 		if is_ipv6:
-			(_, _, _, _c, _a) = i6.getIPAddr(ips)
-			(c, a) = (_c.encode("utf-8"), _a.encode("utf-8"))
+			(_, _, _, c, a) = i6.getIPAddr(ips)
 		else:
 			(c, a) = i.getIPAddr(ips)
 		ipcache[ips] = (c, a)
 
-	print('%s %s %s %f秒' % (ips, c.decode('utf-8'), a.decode('utf-8'), time.time()-ts))
-	print(city_analyst(c.decode('utf-8')+":"+a.decode('utf-8')))
+	print('%s %s %s %f秒' % (ips, c, a, time.time()-ts))
+	print(city_analyst(c+":"+a))
 
 if __name__ == '__main__':
 	main()
