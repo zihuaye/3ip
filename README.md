@@ -74,13 +74,13 @@ struct{
 
 	./ip.py 1.1.1.1		查询IP归属
 	./ip.py 240e:1f:1::1	查询IPv6归属
-	./ip.py 100-200		查询编号100-200的IP记录
+	./ip.py 100-200		查询编号100-200的IP记录(ipv4)
 
 2.Web浏览器查询
 
 	http://xxx/ip?a=1.1.1.1		查询IP归属
 	http://xxx/ip?a=240e:1f:1::1	查询IPv6归属
-	http://xxx/ip?a=100-200		查询编号100-200的IP记录
+	http://xxx/ip?a=100-200		查询编号100-200的IP记录(ipv4)
 	http://xxx/ip?a=1.1.1.1&j=1	返回json格式
 
   http服务配置uwsgi支持，以nginx举例：
