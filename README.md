@@ -4,7 +4,7 @@
 
 	ip.py:	Python2
 
-	ip.py3:	Python3
+	ip.py3:	Python3 (recommended)
 	
 
 # QQWry.Dat 格式:
