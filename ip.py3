@@ -83,23 +83,24 @@ class IPInfo(object):
 
 	def getString(self, offset = 0):
 		''' 读取字符串信息，包括"国家"信息和"地区"信息
-
 		QQWry.Dat的记录区每条信息都是一个以'\0'结尾的字符串'''
 
 		o2 = self.img.find(b'\0', offset)
-		#return self.img[offset:o2]
+
 		# 有可能只有国家信息没有地区信息，
 		b_str = self.img[offset:o2]
 		try:
+			#qqwry.dat字符串编码gb2312
 			utf8_str = str(b_str, 'gb2312').encode('utf-8')
 		except:
-			return '未知'.encode('utf-8')
+			utf8_str = '未知'.encode('utf-8')
 
 		return utf8_str
 
 	def getLong3(self, offset = 0):
 		'''QQWry.Dat中的偏移记录都是3字节，本函数取得3字节的偏移量的常规表示
 		QQWry.Dat使用“字符串“存储这些值'''
+
 		s = self.img[int(offset): int(offset) + 3]
 		s += b'\0'
 		# unpack用一个'I'作为format，后面的字符串必须是4字节
@@ -121,8 +122,6 @@ class IPInfo(object):
 		img = self.img
 		o = offset
 		byte = img[o]
-
-		#print 'getAddr:%d' % byte
 
 		if byte == 1:
 			# 重定向模式1
@@ -162,10 +161,13 @@ class IPInfo(object):
 
 	def find(self, ip, l, r):
 		''' 使用二分法查找网络字节编码的IP地址的索引记录'''
+
 		if r - l <= 1:
 			return l
+
 		m = int((l + r) / 2)
 		o = self.firstIndex + m * 7
+
 		new_ip = unpack('I', self.img[o: o+4])[0]
 		if ip == new_ip:
 			return m
@@ -176,6 +178,7 @@ class IPInfo(object):
 
 	def getIPAddr(self, ip):
 		''' 调用其他函数，取得信息！'''
+
 		# 使用网络字节编码IP地址
 		ip = unpack('!I', socket.inet_aton(ip))[0]
 		# 使用 self.find 函数查找ip的索引偏移
@@ -187,9 +190,11 @@ class IPInfo(object):
 		o2 = self.getLong3(o + 4)
 		# IP记录偏移值+4可以丢弃前4字节的IP地址信息。
 		(c, a) = self.getAddr(o2 + 4)
+
 		return c, a
 
 	def output(self, first, last):
+
 		#walk through the ip db
 		for i in range(first, last):
 			o = self.firstIndex +  i * 7
@@ -201,6 +206,7 @@ class IPInfo(object):
 			print("%s %d %s %s" % (ip, offset, c, a))
 
 	def outputS(self, first, last, json=False):
+
 		#walk through the ip db
 		if json == True:
 			s = '{"ip":"offset cArea aArea"'
@@ -231,6 +237,7 @@ def inet_ntoa(number):
 	addresslist.append((number>>16)&0xff)
 	addresslist.append((number>>8)&0xff)
 	addresslist.append(number&0xff)
+
 	return ".".join("%d" % i for i in addresslist)
 
 def inet_ntoa6(number):
@@ -239,12 +246,14 @@ def inet_ntoa6(number):
 	addresslist.append((number>>32)&0xffff)
 	addresslist.append((number>>16)&0xffff)
 	addresslist.append(number&0xffff)
+
 	return ":".join("%04X" % i for i in addresslist) + "::"
 
 class IPDBv6(object):
 	"""ipv6wry.db数据库查询功能集合
 	refer to https://github.com/Rhilip/ipv6wry.db/blob/master/parser/python/ipdbv6.py
 	"""
+
 	def __init__(self, dbname = "ipv6wry.db"):
 		""" 初始化类，读取数据库内容为一个字符串
 		"""
@@ -262,26 +271,23 @@ class IPDBv6(object):
 			# 数据库格式错误
 			print('数据库格式错误')
 			return
+
 		self.firstIndex = self.getLong8(16)
 		self.indexCount = self.getLong8(8)
 		self.offlen = self.getLong8(6, 1)
 
-		#print(self.firstIndex)
-		#print(self.indexCount)
-		#print(self.offlen)
-
 	def getString(self, offset = 0):
 		""" 读取字符串信息，包括"国家"信息和"地区"信息
-
 		QQWry.Dat的记录区每条信息都是一个以"\0"结尾的字符串"""
 
 		o2 = self.img.find(b"\0", offset)
 		# 有可能只有国家信息没有地区信息，
 		b_str = self.img[offset:o2]
 		try:
-			utf8_str = str(b_str,"utf-8")
+			#ipv6wry.db字符串编码utf-8
+			utf8_str = str(b_str, "utf-8")
 		except:
-			return "未知数据".encode('utf-8')
+			utf8_str = '未知'.encode('utf-8')
 
 		return utf8_str
 
@@ -325,10 +331,13 @@ class IPDBv6(object):
 
 	def find(self, ip, l, r):
 		""" 使用二分法查找网络字节编码的IP地址的索引记录"""
+
 		if r - l <= 1:
 			return l
+
 		m = int((l + r) / 2)
 		o = self.firstIndex + m * (8 + self.offlen)
+
 		new_ip = self.getLong8(o)
 		if ip < new_ip:
 			return self.find(ip, l, m)
@@ -337,6 +346,7 @@ class IPDBv6(object):
 
 	def getIPAddr(self, ip, i4obj = None):
 		""" 调用其他函数，取得信息！"""
+
 		try:
 			# 把IP地址转成数字
 			ip6 = int(ipaddr.IPAddress(ip))
@@ -403,13 +413,18 @@ class IPDBv6(object):
 			i2 = ""
 			c = cc = "错误的IP地址"
 			a = aa = ""
+
 		return (i1, i2, c + " " + a, cc, aa)
 
-
+#IP缓存
 ipcache = {}
+
+#IP库实例
 i = IPInfo('qqwry.dat')
 i6 = IPDBv6('ipv6wry.db')
 
+#(c, a)(国家，地区)字串分析
+#s格式 c:a
 def city_analyst(s, json=False):
 	aa = []
 	country = "中国"
