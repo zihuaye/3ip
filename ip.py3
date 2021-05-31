@@ -673,16 +673,23 @@ def application(environ, start_response):
 			cache_status = "hit"
 			(c, a) = ipcache[ips]
 		else:
-			cache_status = "miss"
+			if ignore_cache:
+				cache_status = "purge"
+			else:
+				cache_status = "miss"
+
 			try:
 				if is_ipv6:
 					(_, _, _, c, a) = i6.getIPAddr(ips)
 				else:
 					(c, a) = i.getIPAddr(ips)
 
-				if len(ipcache) >= 1000:
-					ipcache.pop()
-				ipcache[ips] = (c, a)
+				if ignore_cache:
+					ipcache.pop(ips)
+				else:
+					if len(ipcache) >= 1000:
+						ipcache.pop()
+					ipcache[ips] = (c, a)
 			except:
 				print(ips)
 
