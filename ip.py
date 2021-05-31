@@ -411,8 +411,8 @@ def city_analyst(s, json=False):
 
     finish = False
 
-    if s[:2] == country:
-	s = s[2:]
+    if s.find(country) == 0:
+	s = s.replace(country, '', 1)
     
     #中国运营商
     if len(aa) == 0:
