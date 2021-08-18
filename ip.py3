@@ -699,10 +699,9 @@ def application(environ, start_response):
 		else:
 			resp = '<pre>%s %s %s<br><br>运行时间：%f 秒<br><br>%s<br><br>Cache：%s</pre>' % (ips, c, a,
 					time.time()-ts, city_analyst(c+":"+a), cache_status)
+			resp += "<pre>\n----------------------------------------\nPowered by 3ip</pre>"
 	else:
 		resp = '{"error": "no query param"}'
-
-	resp += "<pre>\n----------------------------------------\nPowered by 3ip</pre>"
 
 	_resp = resp.encode('utf-8')
 	
