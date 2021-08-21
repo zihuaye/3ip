@@ -632,6 +632,12 @@ def application(environ, start_response):
 		content_type = ('Content-Type', 'text/html; charset=utf-8')
 		json = False
 
+	txt = parse_qs(environ['QUERY_STRING']).get('t', [None])[0]
+	if txt !=None:
+		text = True
+	else:
+		text = False
+
 	ips = parse_qs(environ['QUERY_STRING']).get('a', [None])[0]
 
 	try:
@@ -697,9 +703,12 @@ def application(environ, start_response):
 			resp = '{"ip":"%s", "cArea":"%s", "aArea":"%s", "time":"%s", "array":%s}' % (ips, c, a,
 					str(time.time()-ts), city_analyst(c+":"+a, json=True))
 		else:
-			resp = '<pre>%s %s %s<br><br>运行时间：%f 秒<br><br>%s<br><br>Cache：%s</pre>' % (ips, c, a,
-					time.time()-ts, city_analyst(c+":"+a), cache_status)
-			resp += "<pre>\n----------------------------------------\nPowered by 3ip</pre>"
+			if text == True:
+				resp = '%s %s %s' % (ips, c, a)
+			else:
+				resp = '<pre>%s %s %s<br><br>运行时间：%f 秒<br><br>%s<br><br>Cache：%s</pre>' % (ips,
+						c, a, time.time()-ts, city_analyst(c+":"+a), cache_status)
+				resp += "<pre>\n----------------------------------------\nPowered by 3ip</pre>"
 	else:
 		resp = '{"error": "no query param"}'
 
