@@ -704,7 +704,7 @@ def application(environ, start_response):
 					str(time.time()-ts), city_analyst(c+":"+a, json=True))
 		else:
 			if text == True:
-				resp = '%s %s %s' % (ips, c, a)
+				resp = '%s %s %s\n' % (ips, c, a)
 			else:
 				resp = '<pre>%s %s %s<br><br>运行时间：%f 秒<br><br>%s<br><br>Cache：%s</pre>' % (ips,
 						c, a, time.time()-ts, city_analyst(c+":"+a), cache_status)
