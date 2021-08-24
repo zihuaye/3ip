@@ -623,7 +623,9 @@ def city_analyst(s, json=False):
 		return ""
 
 def get_c_a(ips):
-	global cache_status
+	global ipcache, ignore_cache, cache_status
+
+	(c, a) = ("", "")
 
 	if ":" in ips:
 		is_ipv6 = True
@@ -652,12 +654,13 @@ def get_c_a(ips):
 					ipcache.pop()
 				ipcache[ips] = (c, a)
 		except:
-			#print(ips)
-			(c, a) = ("", "")
+			pass
 
 	return (c, a)
 
 def application(environ, start_response):
+
+	global ipcache, ignore_cache, cache_status
 
 	ts = time.time()
 
