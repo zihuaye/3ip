@@ -648,7 +648,7 @@ def get_c_a(ips):
 				(c, a) = i.getIPAddr(ips)
 
 			if ignore_cache == True:
-				ipcache.pop(ips)
+				ipcache.pop(ips, None)
 			else:
 				if len(ipcache) >= 1000:
 					ipcache.pop()
