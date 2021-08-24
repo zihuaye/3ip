@@ -419,7 +419,7 @@ class IPDBv6(object):
 #IP缓存
 ipcache = {}
 ignore_cache = False
-cache_status = 'miss'
+cache_status = "miss"
 
 #IP库实例
 i = IPInfo('qqwry.dat')
@@ -623,17 +623,18 @@ def city_analyst(s, json=False):
 		return ""
 
 def get_c_a(ips):
+	global cache_status
 
 	if ":" in ips:
 		is_ipv6 = True
 	else:
 		is_ipv6 = False
 
-	if ips in ipcache and not ignore_cache:
+	if ips in ipcache and ignore_cache == False:
 		cache_status = "hit"
 		(c, a) = ipcache[ips]
 	else:
-		if ignore_cache:
+		if ignore_cache == True:
 			cache_status = "purge"
 		else:
 			cache_status = "miss"
@@ -644,7 +645,7 @@ def get_c_a(ips):
 			else:
 				(c, a) = i.getIPAddr(ips)
 
-			if ignore_cache:
+			if ignore_cache == True:
 				ipcache.pop(ips)
 			else:
 				if len(ipcache) >= 1000:
@@ -701,8 +702,9 @@ def application(environ, start_response):
 
 	if ips != None:
 
-		if is_xforward == True:
-			ips = ','.join([ips, environ.get('REMOTE_ADDR')])
+		#comment the follow 2 lines to hide cdn ip
+		#if is_xforward == True:
+			#ips = ','.join([ips, environ.get('REMOTE_ADDR')])
 
 		ips0 = ips
 
@@ -744,10 +746,10 @@ def application(environ, start_response):
 			_ips0 = ips0.split(",")
 			for _a_ip0 in _ips0:
 				(c, a) = get_c_a(_a_ip0)
-				resp += '%s %s %s <br>\n' % (_a_ip0, c, a)
+				resp += '%s %s %s\n' % (_a_ip0, c, a)
 
 			if text == False:
-				resp = '<pre>%s <br>运行时间：%f 秒<br><br>%s<br><br>Cache：%s</pre>' % (resp,
+				resp = '<pre>%s<br>运行时间：%f 秒<br><br>%s<br><br>Cache：%s</pre>' % (resp,
 						time.time()-ts, area_info, cache_status)
 				resp += "<pre>\n----------------------------------------\nPowered by 3ip</pre>"
 	else:
