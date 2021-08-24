@@ -733,16 +733,22 @@ def application(environ, start_response):
 				break
 
 		(c, a) = get_c_a(ips)
+		area_info = city_analyst(c+":"+a)
 
+		resp = ''
 		if js != None:
 			resp = '{"ip":"%s", "cArea":"%s", "aArea":"%s", "time":"%s", "array":%s}' % (ips, c, a,
 					str(time.time()-ts), city_analyst(c+":"+a, json=True))
 		else:
-			if text == True:
-				resp = '%s %s %s\n%s\n' % (ips, c, a, ips0)
-			else:
-				resp = '<pre>%s %s %s<br><br>运行时间：%f 秒<br><br>%s<br><br>Cache：%s</pre>' % (ips,
-						c, a, time.time()-ts, city_analyst(c+":"+a), cache_status)
+			_ips0 = ips0.split(",")
+
+			for _a_ip0 in _ips0:
+				(c, a) = get_c_a(_a_ip0)
+				resp += '%s %s %s <br>\n' % (_a_ip0, c, a)
+
+			if text == False:
+				resp = '<pre>%s <br>运行时间：%f 秒<br><br>%s<br><br>Cache：%s</pre>' % (resp,
+						time.time()-ts, area_info, cache_status)
 				resp += "<pre>\n----------------------------------------\nPowered by 3ip</pre>"
 	else:
 		resp = '{"error": "no query param"}'
