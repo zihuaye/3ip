@@ -652,7 +652,14 @@ def application(environ, start_response):
 	if ips != None:
 
 		_ips = ips.split(',')
-		ips = _ips[len(_ips)-1].strip()
+		ips = _ips[0].strip()
+
+		for _aip in _ips:
+			aip = ipaddr.IPAddress(_aip)
+			if aip.is_private != True: #get first real ip
+				ips = _aip
+				break
+
 
 		if "-" in ips:
 			xy = ips.split("-")
