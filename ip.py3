@@ -733,15 +733,15 @@ def application(environ, start_response):
 				break
 
 		(c, a) = get_c_a(ips)
-		area_info = city_analyst(c+":"+a)
 
 		resp = ''
 		if js != None:
 			resp = '{"ip":"%s", "cArea":"%s", "aArea":"%s", "time":"%s", "array":%s}' % (ips, c, a,
 					str(time.time()-ts), city_analyst(c+":"+a, json=True))
 		else:
-			_ips0 = ips0.split(",")
+			area_info = city_analyst(c+":"+a)
 
+			_ips0 = ips0.split(",")
 			for _a_ip0 in _ips0:
 				(c, a) = get_c_a(_a_ip0)
 				resp += '%s %s %s <br>\n' % (_a_ip0, c, a)
