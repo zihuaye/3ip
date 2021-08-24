@@ -418,6 +418,8 @@ class IPDBv6(object):
 
 #IP缓存
 ipcache = {}
+ignore_cache = False
+cache_status = 'miss'
 
 #IP库实例
 i = IPInfo('qqwry.dat')
@@ -620,6 +622,40 @@ def city_analyst(s, json=False):
 	else:
 		return ""
 
+def get_c_a(ips):
+
+	if ":" in ips:
+		is_ipv6 = True
+	else:
+		is_ipv6 = False
+
+	if ips in ipcache and not ignore_cache:
+		cache_status = "hit"
+		(c, a) = ipcache[ips]
+	else:
+		if ignore_cache:
+			cache_status = "purge"
+		else:
+			cache_status = "miss"
+
+		try:
+			if is_ipv6:
+				(_, _, _, c, a) = i6.getIPAddr(ips)
+			else:
+				(c, a) = i.getIPAddr(ips)
+
+			if ignore_cache:
+				ipcache.pop(ips)
+			else:
+				if len(ipcache) >= 1000:
+					ipcache.pop()
+				ipcache[ips] = (c, a)
+		except:
+			#print(ips)
+			(c, a) = ("", "")
+
+	return (c, a)
+
 def application(environ, start_response):
 
 	ts = time.time()
@@ -639,27 +675,39 @@ def application(environ, start_response):
 		text = False
 
 	ips = parse_qs(environ['QUERY_STRING']).get('a', [None])[0]
-
 	try:
 		if ips == None:
 			ips = environ.get('HTTP_X_FORWARDED_FOR')
+
+			if ips != None:
+				is_xforward = True
+			else:
+				is_xforward = False
+				
+			is_a = False
+		else:
+			is_xforward = False
+			is_a = True
 	except:
 		ips = None
+		is_xforward = False
+		is_a = False
 
 	if ips == None:
 		ips = environ.get('REMOTE_ADDR')
+		is_remoteaddr = True
+	else:
+		is_remoteaddr = False
 
 	if ips != None:
 
+		if is_xforward == True:
+			ips = ','.join([ips, environ.get('REMOTE_ADDR')])
+
+		ips0 = ips
+
 		_ips = ips.split(',')
 		ips = _ips[0].strip()
-
-		for _aip in _ips:
-			aip = ipaddr.IPAddress(_aip)
-			if aip.is_private != True: #get first real ip
-				ips = _aip
-				break
-
 
 		if "-" in ips:
 			xy = ips.split("-")
@@ -672,46 +720,26 @@ def application(environ, start_response):
 
 			return resp
 
-		if ":" in ips:
-			is_ipv6 = True
-		else:
-			is_ipv6 = False
-
 		if environ.get('HTTP_CACHE_CONTROL') == "no-cache":
 			ignore_cache = True 
 		else:
 			ignore_cache = False
 
-		if ips in ipcache and not ignore_cache:
-			cache_status = "hit"
-			(c, a) = ipcache[ips]
-		else:
-			if ignore_cache:
-				cache_status = "purge"
-			else:
-				cache_status = "miss"
+		for _a_ip in _ips:
+			a_ip = ipaddr.IPAddress(_a_ip)
+			if a_ip.is_private != True:
+				#get first real ip
+				ips = _a_ip
+				break
 
-			try:
-				if is_ipv6:
-					(_, _, _, c, a) = i6.getIPAddr(ips)
-				else:
-					(c, a) = i.getIPAddr(ips)
-
-				if ignore_cache:
-					ipcache.pop(ips)
-				else:
-					if len(ipcache) >= 1000:
-						ipcache.pop()
-					ipcache[ips] = (c, a)
-			except:
-				print(ips)
+		(c, a) = get_c_a(ips)
 
 		if js != None:
 			resp = '{"ip":"%s", "cArea":"%s", "aArea":"%s", "time":"%s", "array":%s}' % (ips, c, a,
 					str(time.time()-ts), city_analyst(c+":"+a, json=True))
 		else:
 			if text == True:
-				resp = '%s %s %s\n' % (ips, c, a)
+				resp = '%s %s %s\n%s\n' % (ips, c, a, ips0)
 			else:
 				resp = '<pre>%s %s %s<br><br>运行时间：%f 秒<br><br>%s<br><br>Cache：%s</pre>' % (ips,
 						c, a, time.time()-ts, city_analyst(c+":"+a), cache_status)
@@ -739,21 +767,9 @@ def main():
 		return
 
 	_ips = ips.split(',')
-	ips = _ips[len(_ips)-1].strip()
+	ips = _ips[0].strip()
 
-	if ":" in ips:
-		is_ipv6 = True
-	else:
-		is_ipv6 = False
-
-	if ips in ipcache:
-		(c, a) = ipcache[ips]
-	else:
-		if is_ipv6:
-			(_, _, _, c, a) = i6.getIPAddr(ips)
-		else:
-			(c, a) = i.getIPAddr(ips)
-		ipcache[ips] = (c, a)
+	(c, a) = get_c_a(ips)
 
 	print('%s %s %s %f秒' % (ips, c, a, time.time()-ts))
 	print(city_analyst(c+":"+a))
