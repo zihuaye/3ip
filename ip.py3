@@ -633,7 +633,7 @@ def get_c_a(ips):
 		is_ipv6 = False
 
 	if ips in ipcache and ignore_cache == False:
-		cache_status = "hit"
+		cache_status = "hits"
 		(c, a) = ipcache[ips]
 	else:
 		if ignore_cache == True:
@@ -663,20 +663,22 @@ def application(environ, start_response):
 	global ipcache, ignore_cache, cache_status
 
 	ts = time.time()
+	ignore_cache = False
+	cache_status = "miss"
 
-	js = parse_qs(environ['QUERY_STRING']).get('j', [None])[0]
-	if js != None:
+	json = parse_qs(environ['QUERY_STRING']).get('j', [None])[0]
+	if json != None:
 		content_type = ('Content-Type', 'application/json; charset=utf-8')
-		json = True
+		is_json = True
 	else:
 		content_type = ('Content-Type', 'text/html; charset=utf-8')
-		json = False
+		is_json = False
 
 	txt = parse_qs(environ['QUERY_STRING']).get('t', [None])[0]
 	if txt !=None:
-		text = True
+		is_text = True
 	else:
-		text = False
+		is_text = False
 
 	ips = parse_qs(environ['QUERY_STRING']).get('a', [None])[0]
 	try:
@@ -716,7 +718,7 @@ def application(environ, start_response):
 
 		if "-" in ips:
 			xy = ips.split("-")
-			if json == True:
+			if is_json == True:
 				resp = i.outputS(int(xy[0]), int(xy[1]), json=True)
 				start_response('200 OK', [content_type, ('Content-Length', str(len(resp)))])
 			else:
@@ -738,9 +740,10 @@ def application(environ, start_response):
 				break
 
 		(c, a) = get_c_a(ips)
+		_cache_status = cache_status
 
 		resp = ''
-		if js != None:
+		if json != None:
 			resp = '{"ip":"%s", "cArea":"%s", "aArea":"%s", "time":"%s", "array":%s}' % (ips, c, a,
 					str(time.time()-ts), city_analyst(c+":"+a, json=True))
 		else:
@@ -751,10 +754,13 @@ def application(environ, start_response):
 				(c, a) = get_c_a(_a_ip0)
 				resp += '%s %s %s\n' % (_a_ip0, c, a)
 
-			if text == False:
+			if is_text == False:
 				resp = '<pre>%s<br>运行时间：%f 秒<br><br>%s<br><br>Cache：%s</pre>' % (resp,
-						time.time()-ts, area_info, cache_status)
+						time.time()-ts, area_info, _cache_status)
 				resp += "<pre>\n----------------------------------------\nPowered by 3ip</pre>"
+			#else: #for debug
+				#for item in ipcache:
+    					#resp += '%s %s\n' % (item, ipcache[item])
 	else:
 		resp = '{"error": "no query param"}'
 
