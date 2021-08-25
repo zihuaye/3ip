@@ -636,6 +636,11 @@ def get_c_a(ips):
 	else:
 		is_ipv6 = False
 
+	if ips == "0.0.0.0":
+		cache_status = "clear"
+		ipcache = {}
+		return ("clear", "ipcache")	
+
 	if ips in ipcache and ignore_cache == False:
 
 		(c, a, _ts) = ipcache[ips]
@@ -665,7 +670,7 @@ def get_c_a(ips):
 		else:
 			if len(ipcache) >= 1000:
 				ipcache.pop()
-			ipcache[ips] = (c, a, ts)
+			ipcache[ips] = (c, a, int(ts))
 	except:
 		pass
 
