@@ -625,7 +625,11 @@ def city_analyst(s, json=False):
 def get_c_a(ips):
 	global ipcache, ignore_cache, cache_status
 
-	(c, a) = ("", "")
+	c = ""
+	a = ""
+
+	ts = time.time()
+	is_expired = False
 
 	if ":" in ips:
 		is_ipv6 = True
@@ -633,28 +637,37 @@ def get_c_a(ips):
 		is_ipv6 = False
 
 	if ips in ipcache and ignore_cache == False:
-		cache_status = "hits"
-		(c, a) = ipcache[ips]
+
+		(c, a, _ts) = ipcache[ips]
+
+		if _ts > ts - 300:	#cache ttl: 300 secs
+			cache_status = "hits"
+			return (c, a)
+		else:
+			is_expired = True
+
+	if ignore_cache == True:
+		cache_status = "purge"
 	else:
-		if ignore_cache == True:
-			cache_status = "purge"
+		if is_expired == True:
+			cache_status = "expired"
 		else:
 			cache_status = "miss"
 
-		try:
-			if is_ipv6:
-				(_, _, _, c, a) = i6.getIPAddr(ips)
-			else:
-				(c, a) = i.getIPAddr(ips)
+	try:
+		if is_ipv6:
+			(_, _, _, c, a) = i6.getIPAddr(ips)
+		else:
+			(c, a) = i.getIPAddr(ips)
 
-			if ignore_cache == True:
-				ipcache.pop(ips, None)
-			else:
-				if len(ipcache) >= 1000:
-					ipcache.pop()
-				ipcache[ips] = (c, a)
-		except:
-			pass
+		if ignore_cache == True:
+			ipcache.pop(ips, None)
+		else:
+			if len(ipcache) >= 1000:
+				ipcache.pop()
+			ipcache[ips] = (c, a, ts)
+	except:
+		pass
 
 	return (c, a)
 
