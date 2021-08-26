@@ -418,8 +418,6 @@ class IPDBv6(object):
 
 #IP缓存
 ipcache = {}
-ignore_cache = False
-cache_status = "miss"
 
 #IP库实例
 i = IPInfo('qqwry.dat')
@@ -622,36 +620,37 @@ def city_analyst(s, json=False):
 	else:
 		return ""
 
-def get_c_a(ips):
-	global ipcache, ignore_cache, cache_status
+def get_c_a(ips, nocache=False):
+	global ipcache
 
 	c = ""
 	a = ""
+	cache_status = "unknown"
 
-	ts = time.time()
+	_ts = 0
+	ts = int(time.time())
+
 	is_expired = False
+	is_ipv6 = False
 
 	if ":" in ips:
 		is_ipv6 = True
-	else:
-		is_ipv6 = False
 
 	if ips == "0.0.0.0":
 		cache_status = "clear"
 		ipcache = {}
-		return ("clear", "ipcache")	
+		return ("clear", "ipcache", cache_status)	
 
-	if ips in ipcache and ignore_cache == False:
+	if ips in ipcache and nocache == False:
 
 		(c, a, _ts) = ipcache[ips]
-
-		if _ts > ts - 300:	#cache ttl: 300 secs
+		if _ts > (ts - 300):	#cache ttl: 300 secs
 			cache_status = "hits"
-			return (c, a)
+			return (c, a, cache_status)
 		else:
 			is_expired = True
 
-	if ignore_cache == True:
+	if nocache == True:
 		cache_status = "purge"
 	else:
 		if is_expired == True:
@@ -660,29 +659,30 @@ def get_c_a(ips):
 			cache_status = "miss"
 
 	try:
-		if is_ipv6:
+		if is_ipv6 == True:
 			(_, _, _, c, a) = i6.getIPAddr(ips)
 		else:
 			(c, a) = i.getIPAddr(ips)
 
-		if ignore_cache == True:
+		if nocache == True:
 			ipcache.pop(ips, None)
 		else:
 			if len(ipcache) >= 1000:
 				ipcache.pop()
-			ipcache[ips] = (c, a, int(ts))
+			ipcache[ips] = (c, a, ts)
 	except:
 		pass
 
-	return (c, a)
+	return (c, a, cache_status)
 
 def application(environ, start_response):
 
-	global ipcache, ignore_cache, cache_status
+	global ipcache
 
 	ts = time.time()
+
 	ignore_cache = False
-	cache_status = "miss"
+	cache_status = "unknown"
 
 	json = parse_qs(environ['QUERY_STRING']).get('j', [None])[0]
 	if json != None:
@@ -757,28 +757,29 @@ def application(environ, start_response):
 				ips = _a_ip
 				break
 
-		(c, a) = get_c_a(ips)
-		_cache_status = cache_status
+		(c, a, cache_status) = get_c_a(ips, ignore_cache)
 
 		resp = ''
 		if json != None:
 			resp = '{"ip":"%s", "cArea":"%s", "aArea":"%s", "time":"%s", "array":%s}' % (ips, c, a,
 					str(time.time()-ts), city_analyst(c+":"+a, json=True))
 		else:
-			area_info = city_analyst(c+":"+a)
+			area_info = city_analyst(c + ":" + a)
 
-			_ips0 = ips0.split(",")
-			for _a_ip0 in _ips0:
-				(c, a) = get_c_a(_a_ip0)
-				resp += '%s %s %s\n' % (_a_ip0, c, a)
-
+			resp = '%s %s %s\n' % (ips, c, a)
 			if is_text == False:
 				resp = '<pre>%s<br>运行时间：%f 秒<br><br>%s<br><br>Cache：%s</pre>' % (resp,
-						time.time()-ts, area_info, _cache_status)
+						time.time()-ts, area_info, cache_status)
 				resp += "<pre>\n----------------------------------------\nPowered by 3ip</pre>"
-			#else: #for debug
-				#for item in ipcache:
-    					#resp += '%s %s\n' % (item, ipcache[item])
+			#else:
+				#_ips0 = ips0.split(",")
+				#for _a_ip0 in _ips0:
+					#(c, a, cache_status) = get_c_a(_a_ip0, ignore_cache)
+					#resp += '%s %s %s\n' % (_a_ip0, c, a)
+
+				#for debug, uncomment this
+				#for item in environ:
+    					#resp += '%s %s\n' % (item, environ[item])
 	else:
 		resp = '{"error": "no query param"}'
 
@@ -804,7 +805,7 @@ def main():
 	_ips = ips.split(',')
 	ips = _ips[0].strip()
 
-	(c, a) = get_c_a(ips)
+	(c, a, _) = get_c_a(ips)
 
 	print('%s %s %s %f秒' % (ips, c, a, time.time()-ts))
 	print(city_analyst(c+":"+a))
