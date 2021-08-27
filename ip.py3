@@ -621,27 +621,32 @@ def city_analyst(s, json=False):
 		return ""
 
 def get_c_a(ips, nocache=False):
+
 	global ipcache
 
 	c = ""
 	a = ""
+
+	is_expired = False
 	cache_status = "unknown"
+
+	if ips == None:
+		return (c, a, cache_status)
 
 	_ts = 0
 	ts = int(time.time())
 
-	is_expired = False
-	is_ipv6 = False
-
 	if ":" in ips:
 		is_ipv6 = True
+	else:
+		is_ipv6 = False
 
 	if ips == "0.0.0.0":
 		cache_status = "clear"
 		ipcache = {}
 		return ("clear", "ipcache", cache_status)	
 
-	if ips in ipcache and nocache == False:
+	if (ips in ipcache) and (nocache == False):
 
 		(c, a, _ts) = ipcache[ips]
 		if _ts > (ts - 300):	#cache ttl: 300 secs
@@ -664,6 +669,9 @@ def get_c_a(ips, nocache=False):
 		else:
 			(c, a) = i.getIPAddr(ips)
 
+		if a == ' CZ88.NET':
+			a = ''
+
 		if nocache == True:
 			ipcache.pop(ips, None)
 		else:
@@ -681,8 +689,8 @@ def application(environ, start_response):
 
 	ts = time.time()
 
-	ignore_cache = False
 	cache_status = "unknown"
+	resp = ''
 
 	json = parse_qs(environ['QUERY_STRING']).get('j', [None])[0]
 	if json != None:
@@ -693,33 +701,29 @@ def application(environ, start_response):
 		is_json = False
 
 	txt = parse_qs(environ['QUERY_STRING']).get('t', [None])[0]
-	if txt !=None:
+	if txt != None:
 		is_text = True
 	else:
 		is_text = False
 
 	ips = parse_qs(environ['QUERY_STRING']).get('a', [None])[0]
-	try:
-		if ips == None:
-			ips = environ.get('HTTP_X_FORWARDED_FOR')
-
-			if ips != None:
-				is_xforward = True
-			else:
-				is_xforward = False
-				
-			is_a = False
+	if ips == None:
+		ips = environ.get('HTTP_X_FORWARDED_FOR', None)
+		if ips != None:
+			is_xforward = True
 		else:
 			is_xforward = False
-			is_a = True
-	except:
-		ips = None
-		is_xforward = False
 		is_a = False
+	else:
+		is_xforward = False
+		is_a = True
 
 	if ips == None:
-		ips = environ.get('REMOTE_ADDR')
-		is_remoteaddr = True
+		ips = environ.get('REMOTE_ADDR', None)
+		if ips != None:
+			is_remoteaddr = True
+		else:
+			is_remoteaddr = False
 	else:
 		is_remoteaddr = False
 
@@ -727,7 +731,7 @@ def application(environ, start_response):
 
 		#comment the follow 2 lines to hide cdn ip
 		#if is_xforward == True:
-			#ips = ','.join([ips, environ.get('REMOTE_ADDR')])
+			#ips = ','.join([ips, environ.get('REMOTE_ADDR',"")])
 
 		ips0 = ips
 
@@ -745,21 +749,20 @@ def application(environ, start_response):
 
 			return resp
 
-		if environ.get('HTTP_CACHE_CONTROL') == "no-cache":
+		cc = environ.get('HTTP_CACHE_CONTROL', "")
+		if cc == "no-cache":
 			ignore_cache = True 
 		else:
 			ignore_cache = False
 
 		for _a_ip in _ips:
 			a_ip = ipaddr.IPAddress(_a_ip)
-			if a_ip.is_private != True:
-				#get first real ip
+			if a_ip.is_private != True: #get first real ip
 				ips = _a_ip
 				break
 
 		(c, a, cache_status) = get_c_a(ips, ignore_cache)
 
-		resp = ''
 		if json != None:
 			resp = '{"ip":"%s", "cArea":"%s", "aArea":"%s", "time":"%s", "array":%s}' % (ips, c, a,
 					str(time.time()-ts), city_analyst(c+":"+a, json=True))
@@ -767,19 +770,23 @@ def application(environ, start_response):
 			area_info = city_analyst(c + ":" + a)
 
 			resp = '%s %s %s\n' % (ips, c, a)
+
 			if is_text == False:
 				resp = '<pre>%s<br>运行时间：%f 秒<br><br>%s<br><br>Cache：%s</pre>' % (resp,
 						time.time()-ts, area_info, cache_status)
-				resp += "<pre>\n----------------------------------------\nPowered by 3ip</pre>"
-			#else:
-				#_ips0 = ips0.split(",")
-				#for _a_ip0 in _ips0:
-					#(c, a, cache_status) = get_c_a(_a_ip0, ignore_cache)
-					#resp += '%s %s %s\n' % (_a_ip0, c, a)
+				resp += '<pre>\n--------------------------------------\nPowered by 3ip</pre>\n'
+				resp += '<pre>\n'
 
-				#for debug, uncomment this
-				#for item in environ:
-    					#resp += '%s %s\n' % (item, environ[item])
+			#_ips0 = ips0.split(",")
+			#for _a_ip0 in _ips0: #dump x_forward full info
+				#(c, a, cache_status) = get_c_a(_a_ip0, ignore_cache)
+				#resp += '%s %s %s\n' % (_a_ip0, c, a)
+
+			for item in ipcache: #for debug, dump the ipcache
+    				resp += '%s %s\n' % (item, ipcache[item])
+
+			if is_text == False:
+				resp += '</pre>'
 	else:
 		resp = '{"error": "no query param"}'
 
