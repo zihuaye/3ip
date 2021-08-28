@@ -63,7 +63,7 @@ import sys, socket, time, re, ipaddr
 from struct import pack, unpack, unpack_from
 from urllib.parse import parse_qs
 
-class IPInfo(object):
+class IPDBv4(object):
 	'''QQWry.Dat数据库查询功能集合
 	'''
 	def __init__(self, dbname):
@@ -420,11 +420,10 @@ class IPDBv6(object):
 ipcache = {}
 
 #IP库实例
-i = IPInfo('qqwry.dat')
+i4 = IPDBv4('qqwry.dat')
 i6 = IPDBv6('ipv6wry.db')
 
-#(c, a)(国家，地区)字串分析
-#s格式 c:a
+#(c, a)(国家，地区)字串分析 	#s格式 c:a
 def city_analyst(s, json=False):
 	aa = []
 	country = "中国"
@@ -667,7 +666,7 @@ def get_c_a(ips, nocache=False):
 		if is_ipv6 == True:
 			(_, _, _, c, a) = i6.getIPAddr(ips)
 		else:
-			(c, a) = i.getIPAddr(ips)
+			(c, a) = i4.getIPAddr(ips)
 
 		if a == ' CZ88.NET':
 			a = ''
