@@ -766,7 +766,7 @@ def application(environ, start_response):
 			resp = '{"ip":"%s", "cArea":"%s", "aArea":"%s", "time":"%s", "array":%s}' % (ips, c, a,
 					str(time.time()-ts), city_analyst(c+":"+a, json=True))
 		else:
-			area_info = city_analyst(c + ":" + a)
+			area_info = city_analyst(c+":"+a)
 
 			resp = '%s %s %s\n' % (ips, c, a)
 
@@ -774,18 +774,18 @@ def application(environ, start_response):
 				resp = '<pre>%s<br>运行时间：%f 秒<br><br>%s<br><br>Cache：%s</pre>' % (resp,
 						time.time()-ts, area_info, cache_status)
 				resp += '<pre>\n--------------------------------------\nPowered by 3ip</pre>\n'
-				resp += '<pre>\n'
+				#resp += '<pre>\n'
 
 			#_ips0 = ips0.split(",")
 			#for _a_ip0 in _ips0: #dump x_forward full info
 				#(c, a, cache_status) = get_c_a(_a_ip0, ignore_cache)
 				#resp += '%s %s %s\n' % (_a_ip0, c, a)
 
-			for item in ipcache: #for debug, dump the ipcache
-    				resp += '%s %s\n' % (item, ipcache[item])
+			#for item in ipcache: #dump ipcache
+    				#resp += '%s %s\n' % (item, ipcache[item])
 
-			if is_text == False:
-				resp += '</pre>'
+			#if is_text == False:
+				#resp += '</pre>'
 	else:
 		resp = '{"error": "no query param"}'
 
