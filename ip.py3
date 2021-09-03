@@ -705,6 +705,18 @@ def application(environ, start_response):
 	else:
 		is_text = False
 
+	dmp = parse_qs(environ['QUERY_STRING']).get('d', [None])[0]
+	if dmp != None:
+		is_dump = True
+	else:
+		is_dump = False
+
+	xfd = parse_qs(environ['QUERY_STRING']).get('x', [None])[0]
+	if xfd != None:
+		is_xfd = True
+	else:
+		is_xfd = False
+
 	ips = parse_qs(environ['QUERY_STRING']).get('a', [None])[0]
 	if ips == None:
 		ips = environ.get('HTTP_X_FORWARDED_FOR', None)
@@ -773,19 +785,23 @@ def application(environ, start_response):
 			if is_text == False:
 				resp = '<pre>%s<br>运行时间：%f 秒<br><br>%s<br><br>Cache：%s</pre>' % (resp,
 						time.time()-ts, area_info, cache_status)
-				resp += '<pre>\n--------------------------------------\nPowered by 3ip</pre>\n'
-				#resp += '<pre>\n'
+				resp += '\n<pre>--------------------------------------<br>Powered by 3ip</pre>'
+				resp += '\n<pre>'
 
-			#_ips0 = ips0.split(",")
-			#for _a_ip0 in _ips0: #dump x_forward full info
-				#(c, a, cache_status) = get_c_a(_a_ip0, ignore_cache)
-				#resp += '%s %s %s\n' % (_a_ip0, c, a)
+			if is_xfd == True:
+				resp += '\nx_forward info:\n'
+				_ips0 = ips0.split(",")
+				for _a_ip0 in _ips0: #dump x_forward full info
+					(c, a, cache_status) = get_c_a(_a_ip0, ignore_cache)
+					resp += '%s %s %s\n' % (_a_ip0, c, a)
 
-			#for item in ipcache: #dump ipcache
-    				#resp += '%s %s\n' % (item, ipcache[item])
+			if is_dump == True:
+				resp += '\nipcache info:\n'
+				for item in ipcache: #dump ipcache
+    					resp += '%s %s\n' % (item, ipcache[item])
 
-			#if is_text == False:
-				#resp += '</pre>'
+			if is_text == False:
+				resp += '</pre>'
 	else:
 		resp = '{"error": "no query param"}'
 
