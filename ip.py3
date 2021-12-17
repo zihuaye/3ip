@@ -738,11 +738,36 @@ def application(environ, start_response):
 	else:
 		is_remoteaddr = False
 
+	v6s = parse_qs(environ['QUERY_STRING']).get('v6', [None])[0]
+	if v6s != None:
+		v6 = True
+	else:
+		v6 = False
+
 	if ips != None:
 
 		#comment the follow 2 lines to hide cdn ip
 		#if is_xforward == True:
 			#ips = ','.join([ips, environ.get('REMOTE_ADDR',"")])
+
+		if ',' not in ips:
+			try:
+				ipaddr.IPAddress(ips)
+			except:
+				#it's a domain_name
+				try:
+					if v6:
+						_ips0 = socket.getaddrinfo(ips, None, socket.AF_INET6)
+					else:
+						_ips0 = socket.getaddrinfo(ips, None, socket.AF_INET)
+
+					if _ips0 != None:
+						ips = _ips0[0][4][0]
+				except:
+					if v6:
+						ips = '::1'
+					else:
+						ips = '127.0.0.1'
 
 		ips0 = ips
 
@@ -818,6 +843,17 @@ def main():
 		ips = "0.0.0.0"
 	else:
 		ips = sys.argv[1]
+
+	try:
+		ipaddr.IPAddress(ips)
+	except:
+		#it's a domain_name
+		try:
+			_ips0 = socket.getaddrinfo(ips, None)
+			if _ips0 != None:
+				ips = _ips0[0][4][0]
+		except:
+			ips = '127.0.0.1'
 
 	if "-" in ips:
 		xy = ips.split("-")
