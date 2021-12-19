@@ -837,21 +837,33 @@ def application(environ, start_response):
 	return _resp
 
 def main():
-	ts = time.time()
 
 	if len(sys.argv) < 2:
 		ips = "0.0.0.0"
 	else:
 		ips = sys.argv[1]
 
+	ips6 = None
+
 	try:
 		ipaddr.IPAddress(ips)
 	except:
 		#it's a domain_name
 		try:
-			_ips0 = socket.getaddrinfo(ips, None)
+			_ips0 = socket.getaddrinfo(ips, None, socket.AF_INET6)
+			if _ips0 != None:
+				ips6 = _ips0[0][4][0]
+
+		except:
+			ips6 = '::1'
+
+		_ips0 = None
+
+		try:
+			_ips0 = socket.getaddrinfo(ips, None, socket.AF_INET)
 			if _ips0 != None:
 				ips = _ips0[0][4][0]
+
 		except:
 			ips = '127.0.0.1'
 
@@ -863,10 +875,15 @@ def main():
 	_ips = ips.split(',')
 	ips = _ips[0].strip()
 
+	ts = time.time()
 	(c, a, _) = get_c_a(ips)
-
 	print('%s %s %s %f秒' % (ips, c, a, time.time()-ts))
-	print(city_analyst(c+":"+a))
+	#print(city_analyst(c+":"+a))
+
+	if ips6:
+		ts = time.time()
+		(c, a, _) = get_c_a(ips6)
+		print('%s %s %s %f秒' % (ips6, c, a, time.time()-ts))
 
 if __name__ == '__main__':
 	main()
